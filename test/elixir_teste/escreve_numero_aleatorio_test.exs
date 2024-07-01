@@ -1,5 +1,6 @@
 defmodule ElixirTeste.EscreveNumeroAleatorioTest do
     use ExUnit.Case
+    import Mock
 
     test "2 escritas no arquivo geram números diferentes" do
         ElixirTeste.EscreveNumeroAleatorio.escreve
@@ -17,5 +18,19 @@ defmodule ElixirTeste.EscreveNumeroAleatorioTest do
         ]))
 
         assert primeiro_conteudo != segundo_conteudo
+    end
+
+    test "com mock" do
+        :ets.new(:conteudos, [:set, :private, :named_table])
+        with_mock File, [write!: fn (_path, conteudo) -> :ets.insert_new(:conteudos, {conteudo}) end] do
+            ElixirTeste.EscreveNumeroAleatorio.escreve
+            ElixirTeste.EscreveNumeroAleatorio.escreve    
+        end
+
+        conteudos = :ets.tab2list(:conteudos)
+        [primeiro_valor | conteudos] = conteudos
+        [segundo_valor | _] = conteudos
+
+        assert primeiro_valor != segundo_valor
     end
 end
